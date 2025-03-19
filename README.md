@@ -1,3 +1,3 @@
-# Have Fun  
+# React Part 1/2
 
-Enjoy the assignment. Let me know if you have any questions.
+Visit: `http://35.188.170.110:3000`
