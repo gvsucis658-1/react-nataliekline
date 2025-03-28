@@ -1,41 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from './firebaseConfig';
+import {
+    collection,
+    getDocs,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+} from 'firebase/firestore';
 import GuestForm from './GuestForm';
 import './App.css';
 
-const hardCodedGuestData = [
-    {
-        name: 'Linda Kline',
-        relation: 'Mother',
-        table: 1,
-        rsvp: 'Attending',
-    },
-    {
-        name: 'Todd Kline',
-        relation: 'Father',
-        table: 1,
-        rsvp: 'Attending',
-    },
-    {
-        name: 'Jean Gavin',
-        relation: 'Grandma',
-        table: 2,
-        rsvp: 'Attending',
-    },
-    {
-        name: 'Emma Farmer',
-        relation: 'Friend',
-        table: 11,
-        rsvp: 'Declined',
-    },
-    {
-        name: 'Sydney Lukas',
-        relation: 'Cousin',
-        table: 21,
-        rsvp: 'No Response',
-    },
-];
-
-function GuestCard({ guest, onEdit }) {
+function GuestCard({ guest, onEdit, onDelete }) {
     return (
         <div className='guest-card'>
             <h2>{guest.name}</h2>
@@ -44,6 +20,7 @@ function GuestCard({ guest, onEdit }) {
             </p>
             <p>RSVP: {guest.rsvp}</p>
             <button onClick={onEdit}>Edit</button>
+            <button onClick={onDelete}>Delete</button>
         </div>
     );
 }
@@ -59,13 +36,30 @@ function GuestNavigation({ onPrev, onNext, currentIndex, totalGuests }) {
 }
 
 function App() {
-    const [guests, setGuests] = useState(hardCodedGuestData);
+    const [guests, setGuests] = useState([]);
     const [editMode, setEditMode] = useState(false);
     const [guestToEdit, setGuestToEdit] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
 
-    const handleAddGuest = (newGuest) => {
-        setGuests([...guests, newGuest]);
+    const guestsCollection = collection(db, 'guests');
+
+    useEffect(() => {
+        const fetchGuests = async () => {
+            const data = await getDocs(guestsCollection);
+            setGuests(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+            setLoading(false);
+        };
+        fetchGuests();
+    }, [guestsCollection]);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    const handleAddGuest = async (newGuest) => {
+        const docRef = await addDoc(guestsCollection, newGuest);
+        setGuests([...guests, { ...newGuest, id: docRef.id }]);
     };
 
     const handleEditGuest = (guest) => {
@@ -73,12 +67,19 @@ function App() {
         setEditMode(true);
     };
 
-    const handleUpdateGuest = (updatedGuest) => {
+    const handleUpdateGuest = async (updatedGuest) => {
+        const guestDoc = doc(db, 'guests', guestToEdit.id);
+        await updateDoc(guestDoc, updatedGuest);
         setGuests(
-            guests.map((g) => (g.name === guestToEdit.name ? updatedGuest : g))
+            guests.map((g) => (g.id === guestToEdit.id ? updatedGuest : g))
         );
         setEditMode(false);
         setGuestToEdit(null);
+    };
+
+    const handleDeleteGuest = async (id) => {
+        await deleteDoc(doc(db, 'guests', id));
+        setGuests(guests.filter((g) => g.id !== id));
     };
 
     const handleCancelEdit = () => {
@@ -99,7 +100,13 @@ function App() {
     return (
         <div className='app'>
             <h1>Guest List</h1>
-            <GuestCard guest={guest} onEdit={() => handleEditGuest(guest)} />
+            {guest && (
+                <GuestCard
+                    guest={guest}
+                    onEdit={() => handleEditGuest(guest)}
+                    onDelete={() => handleDeleteGuest(guest.id)}
+                />
+            )}
             <GuestNavigation
                 onPrev={handlePrev}
                 onNext={handleNext}

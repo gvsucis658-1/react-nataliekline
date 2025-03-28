@@ -38,6 +38,14 @@ body {
     background-color: #0056b3;
 }
 
+.guest-card button:first-of-type {
+    margin-right: 20px;
+}
+
+.guest-card button:nth-of-type(2) {
+    background-color: #dc3545;
+}
+
 .guest-navigation {
     display: flex;
     align-items: center;

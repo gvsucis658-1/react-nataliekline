@@ -14,10 +14,10 @@ function GuestForm({
 
     useEffect(() => {
         if (editMode && guestToEdit) {
-            setName(guestToEdit.name);
-            setRelation(guestToEdit.relation);
-            setTable(guestToEdit.table);
-            setRsvp(guestToEdit.rsvp);
+            setName(guestToEdit.name || '');
+            setRelation(guestToEdit.relation || '');
+            setTable(guestToEdit.table || '');
+            setRsvp(guestToEdit.rsvp || 'No Response');
         }
     }, [editMode, guestToEdit]);
 
@@ -66,13 +66,13 @@ function GuestForm({
                     required
                 />
                 <select
-                    value={rsvp}
+                    value={rsvp || 'No Response'}
                     onChange={(e) => setRsvp(e.target.value)}
                     required
                 >
+                    <option value='No Response'>No Response</option>
                     <option value='Attending'>Attending</option>
                     <option value='Declined'>Declined</option>
-                    <option value='No Response'>No Response</option>
                 </select>
                 <button type='submit'>{editMode ? 'Update' : 'Add'}</button>
 
